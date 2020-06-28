@@ -9,6 +9,7 @@ from torch.nn import functional as F
 def swish(x):
     return x.mul(torch.sigmoid(x))
 
+
 def log_norm_pdf(x, mu, logvar):
     return -0.5*(logvar + np.log(2 * np.pi) + (x - mu).pow(2) / logvar.exp())
 
@@ -50,7 +51,7 @@ class Encoder(nn.Module):
     def __init__(self, hidden_dim, latent_dim, input_dim, eps=1e-1):
         super(Encoder, self).__init__()
         
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc1 = nn.Linear(input_dim, hidden_dim, bias=False)
         self.ln1 = nn.LayerNorm(hidden_dim, eps=eps)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.ln2 = nn.LayerNorm(hidden_dim, eps=eps)

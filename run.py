@@ -29,7 +29,10 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
-device = torch.device("cuda:0")
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+else:
+    device = torch.device("cpu")
 
 data = get_data(args.dataset)
 train_data, valid_in_data, valid_out_data, test_in_data, test_out_data = data
@@ -101,7 +104,9 @@ def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1, batch_
             ratings_pred[batch.get_ratings().nonzero()] = -np.inf
             
         for m in metrics:
-            m['score'].append(m['metric'](ratings_pred, ratings_out, k=m['k']))
+            r = m['metric'](ratings_pred, ratings_out, k=m['k'])
+            r = r[~np.isnan(r)]
+            m['score'].append(r)
 
     for m in metrics:
         m['score'] = np.concatenate(m['score']).mean()
@@ -178,6 +183,8 @@ for epoch in range(args.n_epochs):
           f'best valid: {best_ndcg:.4f} | train ndcg@100: {train_scores[-1]:.4f}')
 
 
+torch.save(model_best.state_dict(), 'model.pt')
+np.save("item_embedding.npy", model_best.encoder.fc1.weight.cpu().numpy())
     
 test_metrics = [{'metric': ndcg, 'k': 100}, {'metric': recall, 'k': 20}, {'metric': recall, 'k': 50}]
 
