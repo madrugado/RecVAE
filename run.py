@@ -184,7 +184,7 @@ for epoch in range(args.n_epochs):
 
 
 torch.save(model_best.state_dict(), 'model.pt')
-np.save("item_embedding.npy", model_best.encoder.fc1.weight.cpu().numpy())
+np.save("item_embedding.npy", model_best.encoder.fc1.weight.cpu().detach().numpy())
     
 test_metrics = [{'metric': ndcg, 'k': 100}, {'metric': recall, 'k': 20}, {'metric': recall, 'k': 50}]
 
