@@ -8,9 +8,10 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument("-n", "--name", default="reviews_Musical_Instruments_5")
+parser.add_argument("-d", "--directory", default="data")
 args = parser.parse_args()
 
-path = 'data/{}.json'.format(args.name)
+path = '{}/{}.json'.format(args.directory, args.name)
 
 file = open(path)
      
