@@ -67,9 +67,9 @@ tr_users = unique_uid[:(n_users - n_heldout_users * 2)]
 vd_users = unique_uid[(n_users - n_heldout_users * 2): (n_users - n_heldout_users)]
 te_users = unique_uid[(n_users - n_heldout_users):]
 
-train_plays = raw_data.loc[raw_data['reviewerID'].isin(tr_users)]
+train_plays = raw_data.loc[raw_data['userId'].isin(tr_users)]
 
-unique_sid = pd.unique(train_plays['asin'])
+unique_sid = pd.unique(train_plays['movieId'])
 
 show2id = dict((sid, i) for (i, sid) in enumerate(unique_sid))
 profile2id = dict((pid, i) for (i, pid) in enumerate(unique_uid))
@@ -87,7 +87,7 @@ with open(os.path.join(output_dir, 'unique_uid.txt'), 'w') as f:
 
 
 def split_train_test_proportion(data, test_prop=0.2):
-    data_grouped_by_user = data.groupby('reviewerID')
+    data_grouped_by_user = data.groupby('userId')
     tr_list, te_list = list(), list()
 
     np.random.seed(98765)
@@ -114,20 +114,20 @@ def split_train_test_proportion(data, test_prop=0.2):
     return data_tr, data_te
 
 
-vad_plays = raw_data.loc[raw_data['reviewerID'].isin(vd_users)]
-vad_plays = vad_plays.loc[vad_plays['asin'].isin(unique_sid)]
+vad_plays = raw_data.loc[raw_data['userId'].isin(vd_users)]
+vad_plays = vad_plays.loc[vad_plays['movieId'].isin(unique_sid)]
 
 vad_plays_tr, vad_plays_te = split_train_test_proportion(vad_plays)
 
-test_plays = raw_data.loc[raw_data['reviewerID'].isin(te_users)]
-test_plays = test_plays.loc[test_plays['asin'].isin(unique_sid)]
+test_plays = raw_data.loc[raw_data['userId'].isin(te_users)]
+test_plays = test_plays.loc[test_plays['movieId'].isin(unique_sid)]
 
 test_plays_tr, test_plays_te = split_train_test_proportion(test_plays)
 
 
 def numerize(tp):
-    uid = list(map(lambda x: profile2id[x], tp['reviewerID']))
-    sid = list(map(lambda x: show2id[x], tp['asin']))
+    uid = list(map(lambda x: profile2id[x], tp['userId']))
+    sid = list(map(lambda x: show2id[x], tp['movieId']))
     return pd.DataFrame(data={'uid': uid, 'sid': sid}, columns=['uid', 'sid'])
 
 
