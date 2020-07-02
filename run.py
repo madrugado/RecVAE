@@ -38,7 +38,7 @@ data = get_data(args.dataset)
 train_data, valid_in_data, valid_out_data, test_in_data, test_out_data = data
 
 
-def generate(batch_size, device, data_in, data_out=None, shuffle=False, samples_perc_per_epoch=1):
+def generate(batch_size, device, data_in, data_out=None, shuffle=False, samples_perc_per_epoch=1.):
     assert 0 < samples_perc_per_epoch <= 1
     
     total_samples = data_in.shape[0]
@@ -81,7 +81,7 @@ class Batch:
         ).to(self._device)
 
 
-def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1, batch_size=500):
+def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1., batch_size=500):
     metrics = deepcopy(metrics)
     model.eval()
     
