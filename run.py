@@ -190,5 +190,7 @@ test_metrics = [{'metric': ndcg, 'k': 100}, {'metric': recall, 'k': 20}, {'metri
 
 final_scores = evaluate(model_best, test_in_data, test_out_data, test_metrics)
 
-for metric, score in zip(test_metrics, final_scores):
-    print(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}")
+with open("resutls.txt", "at") as f_out:
+    for metric, score in zip(test_metrics, final_scores):
+        print(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}")
+        f_out.write(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}\n")
