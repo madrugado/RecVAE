@@ -15,7 +15,7 @@ path = '{}/{}.json'.format(args.directory, args.name)
 
 file = open(path)
      
-with open('data/{}_ratings.csv'.format(args.name), 'a') as out_file:
+with open('data/{}_ratings.csv'.format(args.name), 'wt') as out_file:
     
     users_count = 0
     items_count = 0
