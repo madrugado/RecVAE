@@ -24,6 +24,7 @@ min_uc = args.min_items_per_user
 min_sc = args.min_users_per_item
 
 raw_data = pd.read_csv(dataset, header=0)
+raw_data['rating'] = raw_data.rating.astype('float')
 raw_data = raw_data[raw_data['rating'] > args.threshold]
 raw_data.head()
 
