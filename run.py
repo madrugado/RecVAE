@@ -1,3 +1,4 @@
+import json
 import numpy as np
 
 import torch
@@ -22,6 +23,8 @@ parser.add_argument('--n-epochs', type=int, default=50)
 parser.add_argument('--n-enc_epochs', type=int, default=3)
 parser.add_argument('--n-dec_epochs', type=int, default=1)
 parser.add_argument('--not-alternating', type=bool, default=False)
+parser.add_argument('-o',"--output-dir", default="data/")
+parser.add_argument("--item-mapping")
 args = parser.parse_args()
 
 seed = 1337
@@ -184,13 +187,26 @@ for epoch in range(args.n_epochs):
 
 
 torch.save(model_best.state_dict(), 'model.pt')
-np.save("item_embedding.npy", model_best.encoder.fc1.weight.cpu().detach().numpy())
+
+# saving embeddings
+item_embs = model_best.encoder.fc1.weight.cpu().detach().numpy().T
+sids = {}
+with open(args.output_dir + "/" + "unique_sid.txt") as f_in:
+    for line in f_in:
+        sids[len(sids)] = int(line.strip())
+with open(args.item_mapping) as f_in:
+    max_item = len(json.load(f_in))
+full_embs = np.random.random((max_item, args.hidden_dim))
+for i in sids:
+    full_embs[sids[i]] = item_embs[i]
+np.save("item_embedding.npy", full_embs)
+
     
 test_metrics = [{'metric': ndcg, 'k': 100}, {'metric': recall, 'k': 20}, {'metric': recall, 'k': 50}]
 
 final_scores = evaluate(model_best, test_in_data, test_out_data, test_metrics)
 
-with open("resutls.txt", "at") as f_out:
+with open("results.txt", "at") as f_out:
     for metric, score in zip(test_metrics, final_scores):
         print(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}")
         f_out.write(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}\n")
