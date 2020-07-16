@@ -87,6 +87,9 @@ class Batch:
 def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1., batch_size=500):
     metrics = deepcopy(metrics)
     model.eval()
+
+    full_user_embs = []
+    full_user_idx = []
     
     for m in metrics:
         m['score'] = []
@@ -101,7 +104,10 @@ def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1., batch
         ratings_in = batch.get_ratings_to_dev()
         ratings_out = batch.get_ratings(is_out=True)
     
-        ratings_pred = model(ratings_in, calculate_loss=False).cpu().detach().numpy()
+        ratings_pred, user_embs = model(ratings_in, calculate_loss=False).cpu().detach().numpy()
+
+        full_user_embs.append(user_embs)
+        full_user_idx.append(batch.get_idx())
         
         if not (data_in is data_out):
             ratings_pred[batch.get_ratings().nonzero()] = -np.inf
@@ -111,10 +117,13 @@ def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1., batch
             r = r[~np.isnan(r)]
             m['score'].append(r)
 
+    full_user_embs = np.concatenate(full_user_embs, axis=0)
+    full_user_idx = np.concatenate(full_user_idx, axis=0)
+
     for m in metrics:
         m['score'] = np.concatenate(m['score']).mean()
         
-    return [x['score'] for x in metrics]
+    return [x['score'] for x in metrics], (full_user_idx, full_user_embs)
 
 
 def run(model, opts, train_data, batch_size, n_epochs, beta, gamma, dropout_rate):
@@ -171,10 +180,10 @@ for epoch in range(args.n_epochs):
         run(opts=[optimizer_decoder], n_epochs=args.n_dec_epochs, dropout_rate=0, **learning_kwargs)
 
     train_scores.append(
-        evaluate(model, train_data, train_data, metrics, 0.01)[0]
+        evaluate(model, train_data, train_data, metrics, 0.01)[0][0]
     )
     valid_scores.append(
-        evaluate(model, valid_in_data, valid_out_data, metrics, 1)[0]
+        evaluate(model, valid_in_data, valid_out_data, metrics, 1)[0][0]
     )
     
     if valid_scores[-1] > best_ndcg:
@@ -188,25 +197,23 @@ for epoch in range(args.n_epochs):
 
 torch.save(model_best.state_dict(), 'model.pt')
 
-# saving embeddings
-item_embs = model_best.encoder.fc1.weight.cpu().detach().numpy().T
-sids = {}
-with open(args.output_dir + "/" + "unique_sid.txt") as f_in:
-    for line in f_in:
-        sids[len(sids)] = int(line.strip())
-with open(args.item_mapping) as f_in:
-    max_item = len(json.load(f_in))
-full_embs = np.random.random((max_item, args.hidden_dim))
-for i in sids:
-    full_embs[sids[i]] = item_embs[i]
-np.save("item_embedding.npy", full_embs)
-
-    
 test_metrics = [{'metric': ndcg, 'k': 100}, {'metric': recall, 'k': 20}, {'metric': recall, 'k': 50}]
 
-final_scores = evaluate(model_best, test_in_data, test_out_data, test_metrics)
+final_scores, (idx, embs) = evaluate(model_best, test_in_data, test_out_data, test_metrics)
 
 with open("results.txt", "at") as f_out:
     for metric, score in zip(test_metrics, final_scores):
         print(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}")
         f_out.write(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}\n")
+
+# saving embeddings
+uids = {}
+with open(args.output_dir + "/" + "unique_uid.txt") as f_in:
+    for line in f_in:
+        uids[len(uids)] = int(line.strip())
+with open(args.item_mapping) as f_in:
+    max_item = len(json.load(f_in))
+full_embs = np.random.random((max_item, args.hidden_dim))
+for i, j in enumerate(idx):
+    full_embs[uids[j]] = embs[i]
+np.save("user_embedding.npy", full_embs)

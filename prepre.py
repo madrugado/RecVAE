@@ -50,6 +50,8 @@ with open('data/{}_ratings.csv'.format(args.name), 'wt') as out_file:
 
 with open("data/{}_item_mapping.json".format(args.name), "wt", encoding="utf-8") as f_out:
     json.dump(fp=f_out, obj=item_to_id)
+with open("data/{}_user_mapping.json".format(args.name), "wt", encoding="utf-8") as f_out:
+    json.dump(fp=f_out, obj=user_to_id)
 
 
 

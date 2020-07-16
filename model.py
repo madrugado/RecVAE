@@ -75,7 +75,7 @@ class Encoder(nn.Module):
         h3 = self.ln3(swish(self.fc3(h2) + h1 + h2))
         h4 = self.ln4(swish(self.fc4(h3) + h1 + h2 + h3))
         h5 = self.ln5(swish(self.fc5(h4) + h1 + h2 + h3 + h4))
-        return self.fc_mu(h5), self.fc_logvar(h5)
+        return self.fc_mu(h5), self.fc_logvar(h5), h5
     
 
 class VAE(nn.Module):
@@ -95,7 +95,7 @@ class VAE(nn.Module):
             return mu
 
     def forward(self, user_ratings, beta=None, gamma=1, dropout_rate=0.5, calculate_loss=True):
-        mu, logvar = self.encoder(user_ratings, dropout_rate=dropout_rate)    
+        mu, logvar, user_embs = self.encoder(user_ratings, dropout_rate=dropout_rate)
         z = self.reparameterize(mu, logvar)
         x_pred = self.decoder(z)
         
@@ -113,7 +113,7 @@ class VAE(nn.Module):
             return (mll, kld), negative_elbo
             
         else:
-            return x_pred
+            return x_pred, user_embs
 
     def update_prior(self):
         self.prior.encoder_old.load_state_dict(deepcopy(self.encoder.state_dict()))
