@@ -33,7 +33,7 @@ class CompositePrior(nn.Module):
         self.encoder_old.requires_grad_(False)
         
     def forward(self, x, z):
-        post_mu, post_logvar = self.encoder_old(x, 0)
+        post_mu, post_logvar, _ = self.encoder_old(x, 0)
         
         stnd_prior = log_norm_pdf(z, self.mu_prior, self.logvar_prior)
         post_prior = log_norm_pdf(z, post_mu, post_logvar)
