@@ -198,13 +198,14 @@ for epoch in range(args.n_epochs):
 torch.save(model_best.state_dict(), 'model.pt')
 
 test_metrics = [{'metric': ndcg, 'k': 100}, {'metric': recall, 'k': 20}, {'metric': recall, 'k': 50}]
-
-final_scores, (idx, embs) = evaluate(model_best, test_in_data, test_out_data, test_metrics)
-
+final_scores, (test_idx, test_embs) = evaluate(model_best, test_in_data, test_out_data, test_metrics)
 with open("results.txt", "at") as f_out:
     for metric, score in zip(test_metrics, final_scores):
         print(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}")
         f_out.write(f"{metric['metric'].__name__}@{metric['k']}:\t{score:.4f}\n")
+
+_, (train_idx, train_embs) = evaluate(model_best, train_data, train_data, [])
+_, (valid_idx, valid_embs) = evaluate(model_best, valid_in_data, valid_out_data, [])
 
 # saving embeddings
 uids = {}
@@ -214,6 +215,12 @@ with open(args.output_dir + "/" + "unique_uid.txt") as f_in:
 with open(args.item_mapping) as f_in:
     max_item = len(json.load(f_in))
 full_embs = np.random.random((max_item, args.hidden_dim))
-for i, j in enumerate(idx):
-    full_embs[uids[j]] = embs[i]
+
+def fill_embeddings(idx, embs):
+    for i, j in enumerate(idx):
+        full_embs[uids[j]] = embs[i]
+
+fill_embeddings(train_idx, train_embs)
+fill_embeddings(valid_idx, valid_embs)
+fill_embeddings(test_idx, test_embs)
 np.save("user_embedding.npy", full_embs)
