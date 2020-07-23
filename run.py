@@ -24,7 +24,7 @@ parser.add_argument('--n-enc_epochs', type=int, default=3)
 parser.add_argument('--n-dec_epochs', type=int, default=1)
 parser.add_argument('--not-alternating', type=bool, default=False)
 parser.add_argument('-o',"--output-dir", default="data/")
-parser.add_argument("--item-mapping")
+parser.add_argument("--user-mapping", required=True)
 args = parser.parse_args()
 
 seed = 1337
@@ -214,7 +214,7 @@ uids = {}
 with open(args.output_dir + "/" + "unique_uid.txt") as f_in:
     for line in f_in:
         uids[len(uids)] = int(line.strip())
-with open(args.item_mapping) as f_in:
+with open(args.user_mapping) as f_in:
     max_item = len(json.load(f_in))
 full_embs = np.random.random((max_item, args.hidden_dim))
 
