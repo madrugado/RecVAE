@@ -104,7 +104,9 @@ def evaluate(model, data_in, data_out, metrics, samples_perc_per_epoch=1., batch
         ratings_in = batch.get_ratings_to_dev()
         ratings_out = batch.get_ratings(is_out=True)
     
-        ratings_pred, user_embs = model(ratings_in, calculate_loss=False).cpu().detach().numpy()
+        ratings_pred, user_embs = model(ratings_in, calculate_loss=False)
+        ratings_pred = ratings_pred.cpu().detach().numpy()
+        user_embs = user_embs.cpu().detach().numpy()
 
         full_user_embs.append(user_embs)
         full_user_idx.append(batch.get_idx())
